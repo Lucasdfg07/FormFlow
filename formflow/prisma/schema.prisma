@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// FormFlow — Database Schema
+// ==========================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  forms     Form[]
+}
+
+model Form {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id])
+  title          String
+  description    String?
+  slug           String     @unique
+  status         String     @default("DRAFT") // DRAFT, PUBLISHED, CLOSED
+  theme          String?    // JSON - cores, fonte, background
+  welcomeScreen  String?    // JSON - título, descrição, botão
+  thankYouScreen String?    // JSON - título, descrição, redirect
+  settings       String?    // JSON - rate limit, close date, etc.
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  fields         Field[]
+  responses      Response[]
+  tagRules       TagRule[]
+  webhooks       Webhook[]
+  sheetsConfig   SheetsConfig?
+}
+
+model Field {
+  id          String   @id @default(cuid())
+  formId      String
+  form        Form     @relation(fields: [formId], references: [id], onDelete: Cascade)
+  type        String   // short_text, long_text, multiple_choice, etc.
+  title       String
+  description String?
+  required    Boolean  @default(false)
+  order       Int
+  properties  String?  // JSON - choices, min, max, placeholder, etc.
+  validations String?  // JSON - regras de validação
+  logic       String?  // JSON - lógica condicional (if/then/jump)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Response {
+  id          String        @id @default(cuid())
+  formId      String
+  form        Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
+  answers     String        // JSON - { fieldId: value }
+  metadata    String?       // JSON - IP, user agent, duration
+  completedAt DateTime?
+  tags        ResponseTag[]
+  createdAt   DateTime      @default(now())
+}
+
+model Tag {
+  id        String        @id @default(cuid())
+  name      String
+  color     String        @default("#6366f1")
+  responses ResponseTag[]
+  rules     TagRule[]
+}
+
+model ResponseTag {
+  id         String   @id @default(cuid())
+  responseId String
+  response   Response @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  tagId      String
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([responseId, tagId])
+}
+
+model TagRule {
+  id       String  @id @default(cuid())
+  formId   String
+  form     Form    @relation(fields: [formId], references: [id], onDelete: Cascade)
+  tagId    String
+  tag      Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  fieldId  String
+  operator String  // equals, contains, gt, lt, empty, not_empty
+  value    String
+  active   Boolean @default(true)
+}
+
+model Webhook {
+  id      String       @id @default(cuid())
+  formId  String
+  form    Form         @relation(fields: [formId], references: [id], onDelete: Cascade)
+  url     String
+  headers String?      // JSON - headers customizados
+  active  Boolean      @default(true)
+  logs    WebhookLog[]
+}
+
+model WebhookLog {
+  id        String   @id @default(cuid())
+  webhookId String
+  webhook   Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  status    Int      // HTTP status code
+  success   Boolean
+  payload   String?  // JSON
+  response  String?
+  attempt   Int      @default(1)
+  createdAt DateTime @default(now())
+}
+
+model SheetsConfig {
+  id            String @id @default(cuid())
+  formId        String @unique
+  form          Form   @relation(fields: [formId], references: [id], onDelete: Cascade)
+  spreadsheetId String
+  sheetName     String
+  columnMapping String // JSON - { fieldId: columnLetter }
+  accessToken   String
+  refreshToken  String
+}

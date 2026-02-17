@@ -1,0 +1,156 @@
+# Synkra AIOS Development Rules for Cursor
+
+You are working with Synkra AIOS, an AI-Orchestrated System for Full Stack Development.
+
+## ⚠️ REGRA OBRIGATÓRIA — ANTES DE QUALQUER AÇÃO
+
+**ANTES de iniciar qualquer trabalho em um novo chat/sessão, o agente DEVE:**
+
+1. **Ler o estado do projeto:** `docs/changelog/PROJECT_STATE.md`
+   - Entender em que fase o projeto está
+   - Quais epics estão concluídos, em progresso ou pendentes
+   - Quais são os padrões e convenções estabelecidos
+   - Stack técnica e decisões de design já tomadas
+
+2. **Ler o changelog recente:** `docs/changelog/CHANGELOG.md`
+   - Entender o que já foi feito e por quê
+   - Não refazer ou conflitar com trabalho existente
+   - Seguir os mesmos padrões de código e design
+
+3. **Ler os session logs recentes:** `docs/changelog/sessions/`
+   - Verificar a última sessão para continuidade
+   - Entender decisões técnicas já tomadas
+   - Identificar próximos passos sugeridos
+
+4. **Identificar-se como agente:** Registrar qual papel está assumindo (@dev, @qa, etc.)
+
+**SEM esta leitura prévia, o agente NÃO deve propor mudanças no código.**
+
+---
+
+## Regras de Rastreabilidade
+
+### Ao iniciar uma sessão:
+- Criar um novo session log em `docs/changelog/sessions/session-NNN.md`
+- Registrar o contexto de entrada (o que foi lido, estado encontrado)
+
+### Ao fazer modificações:
+- Documentar cada mudança significativa com: tipo (feat/fix/refactor), descrição, justificativa
+- Manter lista de arquivos criados/modificados
+- Registrar decisões técnicas com justificativa
+
+### Ao finalizar uma sessão:
+- Atualizar `docs/changelog/CHANGELOG.md` com as mudanças feitas
+- Atualizar `docs/changelog/PROJECT_STATE.md` com o estado atual
+- Atualizar o session log com estado final e próximos passos
+- Atualizar stories relevantes em `docs/stories/`
+
+---
+
+## Core Development Rules
+
+### Agent Integration
+- Recognize AIOS agent activations: @dev, @qa, @architect, @pm, @po, @sm, @analyst
+- Agent commands use * prefix: *help, *create-story, *task, *exit
+- Follow agent-specific workflows and patterns
+
+### Story-Driven Development
+1. **Always work from a story file** in docs/stories/
+2. **Update story checkboxes** as you complete tasks: [ ] → [x]
+3. **Maintain the File List** section with all created/modified files
+4. **Follow acceptance criteria** exactly as written
+
+### Code Quality Standards
+- Write clean, maintainable code following project conventions
+- Include comprehensive error handling
+- Add unit tests for all new functionality
+- Follow existing patterns in the codebase
+
+### Testing Protocol
+- Run all tests before marking tasks complete
+- Ensure linting passes: `npm run lint`
+- Verify type checking: `npm run typecheck`
+- Add tests for new features
+
+## AIOS Framework Structure
+
+```
+aios-core/
+├── agents/       # Agent persona definitions
+├── tasks/        # Executable task workflows
+├── workflows/    # Multi-step workflows
+├── templates/    # Document templates
+└── checklists/   # Validation checklists
+
+docs/
+├── changelog/    # Histórico de modificações e estado do projeto
+│   ├── CHANGELOG.md       # Log completo de todas as mudanças
+│   ├── PROJECT_STATE.md   # Estado atual do projeto (snapshot)
+│   └── sessions/          # Logs individuais por sessão de agente
+├── stories/      # Development stories
+├── prd/          # Sharded PRD sections
+└── architecture/ # Sharded architecture
+```
+
+## Development Workflow
+
+1. **Ler estado do projeto** — Entender onde estamos (PROJECT_STATE.md)
+2. **Read the story** — Understand requirements fully
+3. **Implement sequentially** — Follow task order
+4. **Test thoroughly** — Validate each step
+5. **Update story** — Mark completed items
+6. **Document changes** — Update changelog, session log, PROJECT_STATE
+
+## Best Practices
+
+### When implementing:
+- Check existing patterns first (ler changelog e codebase)
+- Reuse components and utilities
+- Follow naming conventions already established
+- Keep functions focused and small
+- Nunca adicionar botões/elementos de UI sem funcionalidade real
+
+### When testing:
+- Write tests alongside implementation
+- Test edge cases
+- Verify error handling
+- Run full test suite
+
+### When documenting:
+- Atualizar CHANGELOG.md para novas features
+- Atualizar PROJECT_STATE.md com estado atual
+- Criar session log para a sessão corrente
+- Document API changes
+- Add inline comments for complex logic
+- Keep story File List current
+
+## Git & GitHub
+
+- Use conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`
+- Reference story ID in commits: `feat: implement IDE detection [Story 2.1]`
+- Always explain WHY, not just WHAT
+
+## Padrões do Projeto FormFlow
+
+### Stack
+- Next.js 15 (App Router), TypeScript, Tailwind CSS 4, Zustand
+- Prisma ORM (SQLite), NextAuth.js v4 (JWT)
+- Framer Motion, @dnd-kit, Recharts, Lucide React, Zod
+
+### Design System
+- Tema claro (Typeform-inspired)
+- Primary: `#191919`, Accent: `#b16cff`
+- Fonte: Inter, system-ui
+- Imports absolutos com `@/`
+- Componentes UI em `src/components/ui/`
+
+### Princípios
+1. Só botões/elementos com funcionalidade real
+2. Auto-save no editor (debounce 3s)
+3. APIs RESTful em `/api/`
+4. CSS variables via `@theme inline` no globals.css
+5. Sempre responder em Português
+
+---
+*Synkra AIOS Cursor Configuration v2.0*
+*Atualizado: 2026-02-17*
