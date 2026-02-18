@@ -706,7 +706,7 @@ export default function ResponseCharts({
                                   <span
                                     className={`text-xs block ${
                                       isHighlighted
-                                        ? 'text-accent-light font-semibold bg-accent-light/5 px-1 -mx-1 rounded'
+                                        ? 'text-foreground font-semibold bg-accent-light/5 px-1 -mx-1 rounded'
                                         : 'text-foreground'
                                     }`}
                                   >
