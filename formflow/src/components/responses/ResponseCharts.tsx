@@ -214,7 +214,7 @@ export default function ResponseCharts({
     [activeFilters]
   );
 
-  // Responses over time
+  // Responses over time (always uses ALL data)
   const timelineData = useMemo(() => {
     const days: Record<string, number> = {};
     const now = new Date();
@@ -226,7 +226,7 @@ export default function ResponseCharts({
       days[key] = 0;
     }
 
-    for (const r of filteredParsed) {
+    for (const r of parsedAnswers) {
       const date = new Date(r.createdAt);
       const key = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
       if (days[key] !== undefined) {
@@ -235,14 +235,14 @@ export default function ResponseCharts({
     }
 
     return Object.entries(days).map(([date, count]) => ({ date, count }));
-  }, [filteredParsed]);
+  }, [parsedAnswers]);
 
-  // Build distribution for each field
+  // Build distribution for each field (always uses ALL data — charts never change)
   const getFieldDistribution = useCallback(
     (field: FormField, summaryType: SummaryType) => {
       const counts: Record<string, number> = {};
 
-      for (const r of filteredParsed) {
+      for (const r of parsedAnswers) {
         const val = r.parsedAnswers[field.id];
         if (val === undefined || val === null) continue;
 
@@ -270,7 +270,7 @@ export default function ResponseCharts({
         .sort((a, b) => b.value - a.value)
         .slice(0, 20); // limit to top 20
     },
-    [filteredParsed]
+    [parsedAnswers]
   );
 
   // Classify all fields
