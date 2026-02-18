@@ -626,18 +626,20 @@ export default function ResponseCharts({
         })}
       </div>
 
-      {/* Filtered Profiles Section */}
-      {activeFilters.length > 0 && filteredParsed.length > 0 && (
+      {/* Profiles Section — always visible */}
+      {filteredParsed.length > 0 && (
         <div className="bg-white border border-border rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-border bg-surface-hover/30">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <User size={15} />
-                  Perfis filtrados
+                  {activeFilters.length > 0 ? 'Perfis filtrados' : 'Todas as respostas'}
                 </h3>
                 <p className="text-xs text-muted mt-0.5">
-                  {filteredParsed.length} resultado{filteredParsed.length !== 1 ? 's' : ''} encontrado{filteredParsed.length !== 1 ? 's' : ''}
+                  {activeFilters.length > 0
+                    ? `${filteredParsed.length} de ${parsedAnswers.length} resposta${parsedAnswers.length !== 1 ? 's' : ''}`
+                    : `${filteredParsed.length} resposta${filteredParsed.length !== 1 ? 's' : ''}`}
                 </p>
               </div>
             </div>
