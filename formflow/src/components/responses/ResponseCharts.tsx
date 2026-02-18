@@ -434,36 +434,56 @@ export default function ResponseCharts({
         </div>
       </div>
 
+      {/* Collapsed charts — compact chips */}
+      {fieldSummaries.some(({ field }) => hiddenCharts.has(field.id)) && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs text-muted mr-1">Ocultos:</span>
+          {fieldSummaries
+            .filter(({ field }) => hiddenCharts.has(field.id))
+            .map(({ field }) => {
+              const hasActiveFilter = activeFilters.some((f) => f.fieldId === field.id);
+              return (
+                <button
+                  key={field.id}
+                  onClick={() => toggleChartVisibility(field.id)}
+                  className={`inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border transition-colors hover:bg-surface-hover ${
+                    hasActiveFilter
+                      ? 'border-accent-light/40 bg-accent-light/5 text-accent-light'
+                      : 'border-border bg-white text-foreground'
+                  }`}
+                >
+                  <Eye size={12} className="text-muted" />
+                  {field.title}
+                  {hasActiveFilter && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-light" />
+                  )}
+                </button>
+              );
+            })}
+        </div>
+      )}
+
       {/* Field distributions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {fieldSummaries.map(({ field, summaryType }) => {
+          if (hiddenCharts.has(field.id)) return null;
+
           const data = getFieldDistribution(field, summaryType);
           if (data.length === 0) return null;
 
           const total = data.reduce((sum, d) => sum + d.value, 0);
           const isPie = summaryType === 'pie' && data.length <= 6;
           const hasActiveFilter = activeFilters.some((f) => f.fieldId === field.id);
-          const isHidden = hiddenCharts.has(field.id);
 
           return (
             <div
               key={field.id}
-              className={`bg-white border rounded-xl transition-colors ${
+              className={`bg-white border rounded-xl p-6 transition-colors ${
                 hasActiveFilter ? 'border-accent-light/40 ring-1 ring-accent-light/20' : 'border-border'
-              } ${isHidden ? 'p-4' : 'p-6'}`}
+              }`}
             >
               <div className="flex items-center justify-between mb-0.5">
-                <button
-                  onClick={() => toggleChartVisibility(field.id)}
-                  className="flex items-center gap-2 group/toggle"
-                >
-                  {isHidden ? (
-                    <ChevronRight size={14} className="text-muted group-hover/toggle:text-foreground transition-colors" />
-                  ) : (
-                    <ChevronDown size={14} className="text-muted group-hover/toggle:text-foreground transition-colors" />
-                  )}
-                  <h3 className="text-sm font-semibold text-foreground">{field.title}</h3>
-                </button>
+                <h3 className="text-sm font-semibold text-foreground">{field.title}</h3>
                 <div className="flex items-center gap-2">
                   {hasActiveFilter && (
                     <span className="text-[10px] bg-accent-light/10 text-accent-light px-2 py-0.5 rounded-full font-medium">
@@ -473,17 +493,15 @@ export default function ResponseCharts({
                   <button
                     onClick={() => toggleChartVisibility(field.id)}
                     className="text-muted hover:text-foreground transition-colors p-1 rounded-md hover:bg-surface-hover"
-                    title={isHidden ? 'Exibir gráfico' : 'Esconder gráfico'}
+                    title="Esconder gráfico"
                   >
-                    {isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+                    <EyeOff size={14} />
                   </button>
                 </div>
               </div>
-              {!isHidden && <p className="text-xs text-muted mb-4 ml-6">{total} respostas</p>}
+              <p className="text-xs text-muted mb-4">{total} respostas</p>
 
-              {!isHidden && (
-                <>
-                  {isPie ? (
+              {isPie ? (
                     <div className="flex items-center gap-6">
                       <div className="h-40 w-40 flex-shrink-0">
                         <ResponsiveContainer width="100%" height="100%">
@@ -603,8 +621,6 @@ export default function ResponseCharts({
                       </ResponsiveContainer>
                     </div>
                   )}
-                </>
-              )}
             </div>
           );
         })}
