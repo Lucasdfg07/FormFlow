@@ -214,7 +214,47 @@ export default function ResponseCharts({
     [activeFilters]
   );
 
-  // Responses over time (always uses ALL data)
+  // Cross-filter helper: get responses filtered by all filters EXCEPT a specific field
+  // This lets each chart show available options given the constraints from other fields
+  const getResponsesExcludingField = useCallback(
+    (excludeFieldId: string) => {
+      const otherFilters = activeFilters.filter((f) => f.fieldId !== excludeFieldId);
+      if (otherFilters.length === 0) return parsedAnswers;
+
+      const filtersByField = new Map<string, ChartFilter[]>();
+      for (const filter of otherFilters) {
+        const existing = filtersByField.get(filter.fieldId) || [];
+        existing.push(filter);
+        filtersByField.set(filter.fieldId, existing);
+      }
+
+      return parsedAnswers.filter((r) => {
+        return Array.from(filtersByField.entries()).every(([fieldId, fieldFilters]) => {
+          const val = r.parsedAnswers[fieldId];
+          if (val === undefined || val === null) return false;
+
+          const strVal = String(val);
+          const field = fields.find((f) => f.id === fieldId);
+          const fieldValues = parsedAnswers.map((pr) => String(pr.parsedAnswers[fieldId] || ''));
+          const isTokenizable = field && (field.type === 'short_text' || field.type === 'long_text') && isTokenizableField(fieldValues);
+
+          return fieldFilters.some((filter) => {
+            if (isTokenizable) {
+              const tokens = tokenize(strVal).map((t) => t.toLowerCase());
+              return tokens.includes(filter.value.toLowerCase());
+            }
+            if (Array.isArray(val)) {
+              return val.some((v) => String(v).toLowerCase() === filter.value.toLowerCase());
+            }
+            return strVal.toLowerCase() === filter.value.toLowerCase();
+          });
+        });
+      });
+    },
+    [parsedAnswers, activeFilters, fields]
+  );
+
+  // Responses over time (uses fully filtered data)
   const timelineData = useMemo(() => {
     const days: Record<string, number> = {};
     const now = new Date();
@@ -226,7 +266,7 @@ export default function ResponseCharts({
       days[key] = 0;
     }
 
-    for (const r of parsedAnswers) {
+    for (const r of filteredParsed) {
       const date = new Date(r.createdAt);
       const key = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
       if (days[key] !== undefined) {
@@ -235,14 +275,18 @@ export default function ResponseCharts({
     }
 
     return Object.entries(days).map(([date, count]) => ({ date, count }));
-  }, [parsedAnswers]);
+  }, [filteredParsed]);
 
-  // Build distribution for each field (always uses ALL data — charts never change)
+  // Build distribution for each field using CROSS-FILTERING:
+  // Each chart uses data filtered by all OTHER fields, but NOT its own field.
+  // This way the chart always shows all available options for its field
+  // given the constraints from other fields.
   const getFieldDistribution = useCallback(
     (field: FormField, summaryType: SummaryType) => {
+      const crossFilteredData = getResponsesExcludingField(field.id);
       const counts: Record<string, number> = {};
 
-      for (const r of parsedAnswers) {
+      for (const r of crossFilteredData) {
         const val = r.parsedAnswers[field.id];
         if (val === undefined || val === null) continue;
 
@@ -270,7 +314,7 @@ export default function ResponseCharts({
         .sort((a, b) => b.value - a.value)
         .slice(0, 20); // limit to top 20
     },
-    [parsedAnswers]
+    [getResponsesExcludingField]
   );
 
   // Classify all fields
