@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use, useMemo } from 'react';
+import { useState, useEffect, use, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Download, Trash2, Tag, BarChart3, X,
@@ -8,7 +8,7 @@ import {
   Users, Clock, CheckCircle2, ChevronRight, Layers,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import ResponseCharts from '@/components/responses/ResponseCharts';
+import ResponseCharts, { type ChartFilter } from '@/components/responses/ResponseCharts';
 import InlineTagSelector from '@/components/responses/InlineTagSelector';
 import Link from 'next/link';
 
@@ -41,6 +41,11 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
+  const [chartFilters, setChartFilters] = useState<ChartFilter[]>([]);
+
+  const handleChartFilterChange = useCallback((filters: ChartFilter[]) => {
+    setChartFilters(filters);
+  }, []);
 
   const loadData = async () => {
     try {
@@ -327,7 +332,12 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
             </div>
 
             {/* Charts */}
-            <ResponseCharts responses={responses} fields={fields} />
+            <ResponseCharts
+              responses={responses}
+              fields={fields}
+              activeFilters={chartFilters}
+              onFilterChange={handleChartFilterChange}
+            />
           </div>
         ) : (
           <div className="max-w-6xl mx-auto p-6 space-y-4">
