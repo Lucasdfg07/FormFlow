@@ -3,7 +3,7 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useBuilderStore, BuilderField } from '@/stores/builder-store';
-import { GripVertical, Copy, Trash2, ToggleLeft } from 'lucide-react';
+import { GripVertical, Copy, Trash2, ToggleLeft, Eye, EyeOff } from 'lucide-react';
 import * as Icons from 'lucide-react';
 import { FIELD_TYPES } from '@/types';
 
@@ -49,7 +49,7 @@ export default function SortableFieldItem({ field, index = 0 }: SortableFieldIte
         borderColor: isSelected ? `${qColor}40` : `${qColor}15`,
       }}
       onClick={() => selectField(field.id)}
-      className="group relative backdrop-blur-sm border rounded-xl p-6 cursor-pointer transition-all duration-150 hover:border-opacity-30"
+      className={`group relative backdrop-blur-sm border rounded-xl p-6 cursor-pointer transition-all duration-150 hover:border-opacity-30 ${field.hidden ? 'opacity-60' : ''}`}
     >
       {/* Question number */}
       <div className="flex items-start gap-4">
@@ -81,7 +81,15 @@ export default function SortableFieldItem({ field, index = 0 }: SortableFieldIte
               <span className="text-[11px] font-bold" style={{ color: btnColor }}>*</span>
             )}
           </div>
-          <h4 className="font-semibold text-base" style={{ color: qColor }}>{field.title}</h4>
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-base" style={{ color: qColor }}>{field.title}</h4>
+            {field.hidden && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-700 border border-amber-200">
+                <EyeOff size={10} />
+                Oculto
+              </span>
+            )}
+          </div>
           {field.description && (
             <p className="text-sm mt-1" style={{ color: `${qColor}80` }}>{field.description}</p>
           )}
@@ -113,6 +121,14 @@ export default function SortableFieldItem({ field, index = 0 }: SortableFieldIte
 
         {/* Actions */}
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={(e) => { e.stopPropagation(); updateField(field.id, { hidden: !field.hidden }); }}
+            className="p-1.5 rounded-md transition-colors"
+            style={{ color: field.hidden ? '#d97706' : `${qColor}50` }}
+            title={field.hidden ? 'Tornar visível para o respondente' : 'Ocultar do respondente'}
+          >
+            {field.hidden ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
           <button
             onClick={(e) => { e.stopPropagation(); updateField(field.id, { required: !field.required }); }}
             className="p-1.5 rounded-md transition-colors"

@@ -4,7 +4,7 @@ import { useBuilderStore } from '@/stores/builder-store';
 import { FIELD_TYPES } from '@/types';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { X, Plus, Trash2, ChevronDown, Shield } from 'lucide-react';
+import { X, Plus, Trash2, ChevronDown, Shield, EyeOff } from 'lucide-react';
 import { getValidationOptions, getDefaultValidation, type ValidationRule } from '@/lib/validators';
 
 export default function FieldEditor() {
@@ -236,12 +236,31 @@ export default function FieldEditor() {
 
         {/* Required toggle */}
         <div className="flex items-center justify-between py-1">
-          <label className="text-sm text-foreground">Obrigatorio</label>
+          <label className="text-sm text-foreground">Obrigatório</label>
           <button
             onClick={() => updateField(field.id, { required: !field.required })}
             className={`tf-toggle ${field.required ? 'active' : ''}`}
           />
         </div>
+
+        {/* Hidden toggle */}
+        <div className="flex items-center justify-between py-1">
+          <div className="flex items-center gap-1.5">
+            <EyeOff size={14} className="text-muted" />
+            <label className="text-sm text-foreground">Oculto para respondente</label>
+          </div>
+          <button
+            onClick={() => updateField(field.id, { hidden: !field.hidden })}
+            className={`tf-toggle ${field.hidden ? 'active' : ''}`}
+          />
+        </div>
+        {field.hidden && (
+          <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+            <p className="text-xs text-amber-700">
+              Este campo não será exibido no formulário público. Ele existe apenas para dados internos.
+            </p>
+          </div>
+        )}
 
         {/* Divider */}
         <hr className="border-border" />

@@ -7,6 +7,7 @@ export interface BuilderField {
   title: string;
   description: string | null;
   required: boolean;
+  hidden: boolean;
   order: number;
   properties: Record<string, unknown> | null;
   validations: Record<string, unknown> | null;
@@ -113,6 +114,7 @@ export const useBuilderStore = create<BuilderStore>((set, get) => ({
       title: defaultFieldTitle[type] || 'Nova pergunta',
       description: null,
       required: false,
+      hidden: false,
       order: fields.length,
       properties: defaultProperties[type] || null,
       validations: null,

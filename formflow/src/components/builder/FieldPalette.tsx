@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { FIELD_TYPES, FieldType } from '@/types';
 import { useBuilderStore } from '@/stores/builder-store';
 import * as Icons from 'lucide-react';
-import { Plus, Search, X } from 'lucide-react';
+import { Plus, Search, X, EyeOff } from 'lucide-react';
 
 const categoryConfig: Record<string, { label: string; icon: string }> = {
   text: { label: 'Texto & Video', icon: 'AlignLeft' },
@@ -90,7 +90,7 @@ export default function FieldPalette() {
                       isSelected
                         ? 'bg-accent-light border border-accent/20'
                         : 'hover:bg-surface-hover border border-transparent'
-                    }`}
+                    } ${field.hidden ? 'opacity-50' : ''}`}
                   >
                     <span className="text-[11px] font-medium text-muted w-4 flex-shrink-0">{index + 1}</span>
                     {IconComponent && (
@@ -99,6 +99,9 @@ export default function FieldPalette() {
                     <span className={`text-xs truncate flex-1 ${isSelected ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                       {field.title || 'Sem titulo'}
                     </span>
+                    {field.hidden && (
+                      <EyeOff size={12} className="text-muted flex-shrink-0" />
+                    )}
                   </button>
                 );
               })

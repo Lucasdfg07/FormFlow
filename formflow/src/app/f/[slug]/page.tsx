@@ -24,11 +24,14 @@ export default async function PublicFormPage({ params }: PublicFormPageProps) {
   const thankYouScreen = form.thankYouScreen ? JSON.parse(form.thankYouScreen) : null;
   const theme = form.theme ? JSON.parse(form.theme) : null;
 
+  // Filter out hidden fields — they exist for internal data only
+  const visibleFields = form.fields.filter((f) => !f.hidden);
+
   return (
     <FormRenderer
       formId={form.id}
       title={form.title}
-      fields={form.fields}
+      fields={visibleFields}
       welcomeScreen={welcomeScreen}
       thankYouScreen={thankYouScreen}
       theme={theme}

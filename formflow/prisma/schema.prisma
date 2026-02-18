@@ -50,6 +50,7 @@ model Field {
   title       String
   description String?
   required    Boolean  @default(false)
+  hidden      Boolean  @default(false) // Oculto para o usuário final
   order       Int
   properties  String?  // JSON - choices, min, max, placeholder, etc.
   validations String?  // JSON - regras de validação

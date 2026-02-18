@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { formId, type, title, description, required, order, properties, validations, logic } = body;
+    const { formId, type, title, description, required, hidden, order, properties, validations, logic } = body;
 
     // Check ownership
     const form = await prisma.form.findFirst({
@@ -65,6 +65,7 @@ export async function POST(request: Request) {
         title: title || 'Nova pergunta',
         description: description || null,
         required: required || false,
+        hidden: hidden || false,
         order: order ?? 0,
         properties: properties ? JSON.stringify(properties) : null,
         validations: validations ? JSON.stringify(validations) : null,
@@ -90,7 +91,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { formId, fields } = body as {
       formId: string;
-      fields: { id: string; order: number; title?: string; description?: string | null; required?: boolean; properties?: string | null; validations?: string | null; logic?: string | null }[];
+      fields: { id: string; order: number; title?: string; description?: string | null; required?: boolean; hidden?: boolean; properties?: string | null; validations?: string | null; logic?: string | null }[];
     };
 
     // Check ownership
@@ -112,6 +113,7 @@ export async function PUT(request: Request) {
             ...(field.title !== undefined ? { title: field.title } : {}),
             ...(field.description !== undefined ? { description: field.description } : {}),
             ...(field.required !== undefined ? { required: field.required } : {}),
+            ...(field.hidden !== undefined ? { hidden: field.hidden } : {}),
             ...(field.properties !== undefined ? { properties: field.properties } : {}),
             ...(field.validations !== undefined ? { validations: field.validations } : {}),
             ...(field.logic !== undefined ? { logic: field.logic } : {}),
