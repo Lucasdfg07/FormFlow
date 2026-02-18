@@ -311,8 +311,7 @@ export default function ResponseCharts({
 
       return Object.entries(counts)
         .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 20); // limit to top 20
+        .sort((a, b) => b.value - a.value);
     },
     [getResponsesExcludingField]
   );
@@ -515,10 +514,10 @@ export default function ResponseCharts({
                   </div>
                 </div>
               ) : (
-                <div className="h-[180px]">
+                <div style={{ height: Math.max(180, data.length * 30) }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
-                      data={data.slice(0, 15)}
+                      data={data}
                       layout="vertical"
                       onClick={(state) => {
                         if (state?.activeLabel) {
@@ -526,6 +525,7 @@ export default function ResponseCharts({
                         }
                       }}
                       style={{ cursor: 'pointer' }}
+                      margin={{ top: 0, right: 10, bottom: 0, left: 0 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="#e1e1e1" horizontal={false} />
                       <XAxis
@@ -538,14 +538,18 @@ export default function ResponseCharts({
                       <YAxis
                         dataKey="name"
                         type="category"
-                        tick={{ fill: '#8c8c8c', fontSize: 11 }}
+                        tick={{ fill: '#8c8c8c', fontSize: 10 }}
                         axisLine={{ stroke: '#e1e1e1' }}
                         tickLine={false}
-                        width={120}
+                        width={140}
+                        interval={0}
+                        tickFormatter={(value: string) =>
+                          value.length > 22 ? value.substring(0, 20) + '…' : value
+                        }
                       />
                       <Tooltip content={<CustomTooltip />} />
                       <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
-                        {data.slice(0, 15).map((d, i) => {
+                        {data.map((d, i) => {
                           const active = isFilterActive(field.id, d.name);
                           return (
                             <Cell
