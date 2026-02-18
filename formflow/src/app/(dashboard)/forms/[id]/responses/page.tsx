@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ResponseCharts from '@/components/responses/ResponseCharts';
+import InlineTagSelector from '@/components/responses/InlineTagSelector';
 import Link from 'next/link';
 
 interface ResponseData {
@@ -166,6 +167,17 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(filteredResponses.map((r) => r.id)));
+    }
+  };
+
+  // Update tags for a specific response in local state
+  const handleTagsChanged = (responseId: string, tags: { tag: { id: string; name: string; color: string } }[]) => {
+    setResponses((prev) =>
+      prev.map((r) => (r.id === responseId ? { ...r, tags } : r))
+    );
+    // Also update selected response if it's the one being edited
+    if (selectedResponse?.id === responseId) {
+      setSelectedResponse((prev) => prev ? { ...prev, tags } : null);
     }
   };
 
@@ -460,18 +472,12 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                                   : String(answers[f.id] || '—')}
                               </td>
                             ))}
-                            <td className="px-4 py-3">
-                              <div className="flex gap-1">
-                                {response.tags.map((t) => (
-                                  <span
-                                    key={t.tag.id}
-                                    className="text-[10px] px-2 py-0.5 rounded font-medium"
-                                    style={{ backgroundColor: `${t.tag.color}15`, color: t.tag.color }}
-                                  >
-                                    {t.tag.name}
-                                  </span>
-                                ))}
-                              </div>
+                            <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                              <InlineTagSelector
+                                responseId={response.id}
+                                currentTags={response.tags}
+                                onTagsChanged={handleTagsChanged}
+                              />
                             </td>
                             <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                               <button
@@ -536,24 +542,16 @@ export default function ResponsesPage({ params }: { params: Promise<{ id: string
                 );
               })}
 
-              {selectedResponse.tags.length > 0 && (
-                <div>
-                  <p className="text-xs text-muted font-medium flex items-center gap-1 mb-1.5">
-                    <Tag size={12} /> Tags
-                  </p>
-                  <div className="flex gap-1 flex-wrap">
-                    {selectedResponse.tags.map((t) => (
-                      <span
-                        key={t.tag.id}
-                        className="text-xs px-2 py-0.5 rounded font-medium"
-                        style={{ backgroundColor: `${t.tag.color}15`, color: t.tag.color }}
-                      >
-                        {t.tag.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <div>
+                <p className="text-xs text-muted font-medium flex items-center gap-1 mb-1.5">
+                  <Tag size={12} /> Tags
+                </p>
+                <InlineTagSelector
+                  responseId={selectedResponse.id}
+                  currentTags={selectedResponse.tags}
+                  onTagsChanged={handleTagsChanged}
+                />
+              </div>
 
               <hr className="border-border" />
 
