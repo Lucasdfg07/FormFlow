@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, FileText, List, Grid3x3, ArrowUpDown, Search } from 'lucide-react';
+import { Plus, FileText, List, Grid3x3, ArrowUpDown, Search, Upload } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import FormCard from '@/components/forms/FormCard';
 import CreateFormModal from '@/components/forms/CreateFormModal';
+import ImportTypeformModal from '@/components/forms/ImportTypeformModal';
 
 interface DashboardForm {
   id: string;
@@ -25,6 +26,7 @@ export default function DashboardPage() {
   const [forms, setForms] = useState<DashboardForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [sortBy, setSortBy] = useState<SortBy>('date');
   const [search, setSearch] = useState('');
@@ -118,9 +120,14 @@ export default function DashboardPage() {
               {forms.length}
             </span>
           </div>
-          <Button onClick={() => setShowCreateModal(true)} size="md">
-            <Plus size={16} /> Novo formulario
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={() => setShowImportModal(true)} size="md">
+              <Upload size={16} /> Importar CSV
+            </Button>
+            <Button onClick={() => setShowCreateModal(true)} size="md">
+              <Plus size={16} /> Novo formulario
+            </Button>
+          </div>
         </div>
 
         {/* Toolbar */}
@@ -240,6 +247,12 @@ export default function DashboardPage() {
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onCreated={fetchForms}
+        />
+
+        <ImportTypeformModal
+          isOpen={showImportModal}
+          onClose={() => setShowImportModal(false)}
+          onImported={fetchForms}
         />
       </div>
     </div>
