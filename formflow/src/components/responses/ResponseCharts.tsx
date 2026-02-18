@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -15,7 +15,7 @@ import {
   Area,
   AreaChart,
 } from 'recharts';
-import { X, Filter, User, Mail, Phone, MapPin, Briefcase, Calendar, ExternalLink } from 'lucide-react';
+import { X, Filter, User, Mail, Phone, MapPin, Briefcase, Calendar, ExternalLink, ChevronDown, ChevronRight, Eye, EyeOff } from 'lucide-react';
 
 interface FormField {
   id: string;
@@ -327,6 +327,21 @@ export default function ResponseCharts({
       .filter((fs) => fs.summaryType !== 'none');
   }, [fields, parsedAnswers]);
 
+  // Track which charts are hidden
+  const [hiddenCharts, setHiddenCharts] = useState<Set<string>>(new Set());
+
+  const toggleChartVisibility = useCallback((fieldId: string) => {
+    setHiddenCharts((prev) => {
+      const next = new Set(prev);
+      if (next.has(fieldId)) {
+        next.delete(fieldId);
+      } else {
+        next.add(fieldId);
+      }
+      return next;
+    });
+  }, []);
+
   // Detect "profile" fields for the profiles section
   const getProfileIcon = (field: FormField) => {
     const title = field.title.toLowerCase();
@@ -428,143 +443,167 @@ export default function ResponseCharts({
           const total = data.reduce((sum, d) => sum + d.value, 0);
           const isPie = summaryType === 'pie' && data.length <= 6;
           const hasActiveFilter = activeFilters.some((f) => f.fieldId === field.id);
+          const isHidden = hiddenCharts.has(field.id);
 
           return (
             <div
               key={field.id}
-              className={`bg-white border rounded-xl p-6 transition-colors ${
+              className={`bg-white border rounded-xl transition-colors ${
                 hasActiveFilter ? 'border-accent-light/40 ring-1 ring-accent-light/20' : 'border-border'
-              }`}
+              } ${isHidden ? 'p-4' : 'p-6'}`}
             >
               <div className="flex items-center justify-between mb-0.5">
-                <h3 className="text-sm font-semibold text-foreground">{field.title}</h3>
-                {hasActiveFilter && (
-                  <span className="text-[10px] bg-accent-light/10 text-accent-light px-2 py-0.5 rounded-full font-medium">
-                    Filtro ativo
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-muted mb-4">{total} respostas</p>
-
-              {isPie ? (
-                <div className="flex items-center gap-6">
-                  <div className="h-40 w-40 flex-shrink-0">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={data}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={30}
-                          outerRadius={60}
-                          paddingAngle={2}
-                          dataKey="value"
-                          nameKey="name"
-                          style={{ cursor: 'pointer' }}
-                          onClick={(entry) => {
-                            if (entry && entry.name) {
-                              toggleFilter(field.id, field.title, entry.name);
-                            }
-                          }}
-                        >
-                          {data.map((d, i) => (
-                            <Cell
-                              key={i}
-                              fill={CHART_COLORS[i % CHART_COLORS.length]}
-                              opacity={isFilterActive(field.id, d.name) ? 1 : hasActiveFilter ? 0.3 : 0.85}
-                              stroke={isFilterActive(field.id, d.name) ? '#000' : 'none'}
-                              strokeWidth={isFilterActive(field.id, d.name) ? 2 : 0}
-                            />
-                          ))}
-                        </Pie>
-                        <Tooltip content={<CustomTooltip />} />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </div>
-                  <div className="space-y-1.5 flex-1">
-                    {data.map((d, i) => {
-                      const pct = Math.round((d.value / total) * 100);
-                      const active = isFilterActive(field.id, d.name);
-                      return (
-                        <button
-                          key={d.name}
-                          onClick={() => toggleFilter(field.id, field.title, d.name)}
-                          className={`flex items-center justify-between text-sm w-full px-2 py-1 rounded-md transition-all ${
-                            active
-                              ? 'bg-accent-light/10 ring-1 ring-accent-light/30'
-                              : 'hover:bg-surface-hover'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
-                            />
-                            <span className={`text-xs ${active ? 'font-semibold text-foreground' : 'text-foreground'}`}>
-                              {d.name}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted">{pct}%</span>
-                            <span className="text-xs font-medium text-foreground w-6 text-right">{d.value}</span>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
+                <button
+                  onClick={() => toggleChartVisibility(field.id)}
+                  className="flex items-center gap-2 group/toggle"
+                >
+                  {isHidden ? (
+                    <ChevronRight size={14} className="text-muted group-hover/toggle:text-foreground transition-colors" />
+                  ) : (
+                    <ChevronDown size={14} className="text-muted group-hover/toggle:text-foreground transition-colors" />
+                  )}
+                  <h3 className="text-sm font-semibold text-foreground">{field.title}</h3>
+                </button>
+                <div className="flex items-center gap-2">
+                  {hasActiveFilter && (
+                    <span className="text-[10px] bg-accent-light/10 text-accent-light px-2 py-0.5 rounded-full font-medium">
+                      Filtro ativo
+                    </span>
+                  )}
+                  <button
+                    onClick={() => toggleChartVisibility(field.id)}
+                    className="text-muted hover:text-foreground transition-colors p-1 rounded-md hover:bg-surface-hover"
+                    title={isHidden ? 'Exibir gráfico' : 'Esconder gráfico'}
+                  >
+                    {isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+                  </button>
                 </div>
-              ) : (
-                <div style={{ height: Math.max(180, data.length * 30) }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={data}
-                      layout="vertical"
-                      onClick={(state) => {
-                        if (state?.activeLabel) {
-                          toggleFilter(field.id, field.title, state.activeLabel);
-                        }
-                      }}
-                      style={{ cursor: 'pointer' }}
-                      margin={{ top: 0, right: 10, bottom: 0, left: 0 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e1e1e1" horizontal={false} />
-                      <XAxis
-                        type="number"
-                        tick={{ fill: '#8c8c8c', fontSize: 11 }}
-                        axisLine={{ stroke: '#e1e1e1' }}
-                        tickLine={false}
-                        allowDecimals={false}
-                      />
-                      <YAxis
-                        dataKey="name"
-                        type="category"
-                        tick={{ fill: '#8c8c8c', fontSize: 10 }}
-                        axisLine={{ stroke: '#e1e1e1' }}
-                        tickLine={false}
-                        width={140}
-                        interval={0}
-                        tickFormatter={(value: string) =>
-                          value.length > 22 ? value.substring(0, 20) + '…' : value
-                        }
-                      />
-                      <Tooltip content={<CustomTooltip />} />
-                      <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
+              </div>
+              {!isHidden && <p className="text-xs text-muted mb-4 ml-6">{total} respostas</p>}
+
+              {!isHidden && (
+                <>
+                  {isPie ? (
+                    <div className="flex items-center gap-6">
+                      <div className="h-40 w-40 flex-shrink-0">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={data}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={30}
+                              outerRadius={60}
+                              paddingAngle={2}
+                              dataKey="value"
+                              nameKey="name"
+                              style={{ cursor: 'pointer' }}
+                              onClick={(entry) => {
+                                if (entry && entry.name) {
+                                  toggleFilter(field.id, field.title, entry.name);
+                                }
+                              }}
+                            >
+                              {data.map((d, i) => (
+                                <Cell
+                                  key={i}
+                                  fill={CHART_COLORS[i % CHART_COLORS.length]}
+                                  opacity={isFilterActive(field.id, d.name) ? 1 : hasActiveFilter ? 0.3 : 0.85}
+                                  stroke={isFilterActive(field.id, d.name) ? '#000' : 'none'}
+                                  strokeWidth={isFilterActive(field.id, d.name) ? 2 : 0}
+                                />
+                              ))}
+                            </Pie>
+                            <Tooltip content={<CustomTooltip />} />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div className="space-y-1.5 flex-1">
                         {data.map((d, i) => {
+                          const pct = Math.round((d.value / total) * 100);
                           const active = isFilterActive(field.id, d.name);
                           return (
-                            <Cell
-                              key={i}
-                              fill={active ? '#b16cff' : '#b16cff'}
-                              opacity={active ? 1 : hasActiveFilter ? 0.3 : 0.85}
-                              stroke={active ? '#7c3aed' : 'none'}
-                              strokeWidth={active ? 2 : 0}
-                            />
+                            <button
+                              key={d.name}
+                              onClick={() => toggleFilter(field.id, field.title, d.name)}
+                              className={`flex items-center justify-between text-sm w-full px-2 py-1 rounded-md transition-all ${
+                                active
+                                  ? 'bg-accent-light/10 ring-1 ring-accent-light/30'
+                                  : 'hover:bg-surface-hover'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                  style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                                />
+                                <span className={`text-xs ${active ? 'font-semibold text-foreground' : 'text-foreground'}`}>
+                                  {d.name}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted">{pct}%</span>
+                                <span className="text-xs font-medium text-foreground w-6 text-right">{d.value}</span>
+                              </div>
+                            </button>
                           );
                         })}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ height: Math.max(180, data.length * 30) }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart
+                          data={data}
+                          layout="vertical"
+                          onClick={(state) => {
+                            if (state?.activeLabel) {
+                              toggleFilter(field.id, field.title, state.activeLabel);
+                            }
+                          }}
+                          style={{ cursor: 'pointer' }}
+                          margin={{ top: 0, right: 10, bottom: 0, left: 0 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" stroke="#e1e1e1" horizontal={false} />
+                          <XAxis
+                            type="number"
+                            tick={{ fill: '#8c8c8c', fontSize: 11 }}
+                            axisLine={{ stroke: '#e1e1e1' }}
+                            tickLine={false}
+                            allowDecimals={false}
+                          />
+                          <YAxis
+                            dataKey="name"
+                            type="category"
+                            tick={{ fill: '#8c8c8c', fontSize: 10 }}
+                            axisLine={{ stroke: '#e1e1e1' }}
+                            tickLine={false}
+                            width={140}
+                            interval={0}
+                            tickFormatter={(value: string) =>
+                              value.length > 22 ? value.substring(0, 20) + '…' : value
+                            }
+                          />
+                          <Tooltip content={<CustomTooltip />} />
+                          <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={16}>
+                            {data.map((d, i) => {
+                              const active = isFilterActive(field.id, d.name);
+                              return (
+                                <Cell
+                                  key={i}
+                                  fill={active ? '#b16cff' : '#b16cff'}
+                                  opacity={active ? 1 : hasActiveFilter ? 0.3 : 0.85}
+                                  stroke={active ? '#7c3aed' : 'none'}
+                                  strokeWidth={active ? 2 : 0}
+                                />
+                              );
+                            })}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           );
