@@ -147,32 +147,44 @@ export default function ResponseCharts({
   }, [responses]);
 
   // Apply filters to get filtered responses
+  // Logic: OR within same field (e.g. "Junior" OR "JR"), AND across different fields
   const filteredParsed = useMemo(() => {
     if (activeFilters.length === 0) return parsedAnswers;
 
+    // Group filters by fieldId
+    const filtersByField = new Map<string, ChartFilter[]>();
+    for (const filter of activeFilters) {
+      const existing = filtersByField.get(filter.fieldId) || [];
+      existing.push(filter);
+      filtersByField.set(filter.fieldId, existing);
+    }
+
     return parsedAnswers.filter((r) => {
-      return activeFilters.every((filter) => {
-        const val = r.parsedAnswers[filter.fieldId];
+      // AND across fields: every field group must match
+      return Array.from(filtersByField.entries()).every(([fieldId, fieldFilters]) => {
+        const val = r.parsedAnswers[fieldId];
         if (val === undefined || val === null) return false;
 
         const strVal = String(val);
+        const field = fields.find((f) => f.id === fieldId);
 
         // Check if field is tokenizable
-        const fieldValues = parsedAnswers.map((pr) => String(pr.parsedAnswers[filter.fieldId] || ''));
-        const field = fields.find((f) => f.id === filter.fieldId);
+        const fieldValues = parsedAnswers.map((pr) => String(pr.parsedAnswers[fieldId] || ''));
+        const isTokenizable = field && (field.type === 'short_text' || field.type === 'long_text') && isTokenizableField(fieldValues);
 
-        if (field && (field.type === 'short_text' || field.type === 'long_text') && isTokenizableField(fieldValues)) {
-          const tokens = tokenize(strVal).map((t) => t.toLowerCase());
-          return tokens.includes(filter.value.toLowerCase());
-        }
+        // OR within same field: at least one filter value must match
+        return fieldFilters.some((filter) => {
+          if (isTokenizable) {
+            const tokens = tokenize(strVal).map((t) => t.toLowerCase());
+            return tokens.includes(filter.value.toLowerCase());
+          }
 
-        // For arrays (checkbox)
-        if (Array.isArray(val)) {
-          return val.some((v) => String(v).toLowerCase() === filter.value.toLowerCase());
-        }
+          if (Array.isArray(val)) {
+            return val.some((v) => String(v).toLowerCase() === filter.value.toLowerCase());
+          }
 
-        // Direct match
-        return strVal.toLowerCase() === filter.value.toLowerCase();
+          return strVal.toLowerCase() === filter.value.toLowerCase();
+        });
       });
     });
   }, [parsedAnswers, activeFilters, fields]);
