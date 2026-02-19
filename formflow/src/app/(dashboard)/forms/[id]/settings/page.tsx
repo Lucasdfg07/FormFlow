@@ -385,8 +385,8 @@ export default function FormSettingsPage({ params }: { params: Promise<{ id: str
                       value={welcomeDesc}
                       onChange={(e) => setWelcomeDesc(e.target.value)}
                       placeholder="Uma breve descricao..."
-                      rows={3}
-                      className="w-full px-3 py-2 bg-white border border-border rounded-lg text-sm text-foreground placeholder-muted hover:border-border-hover focus:border-foreground transition-all resize-none"
+                      rows={6}
+                      className="w-full px-3 py-2 bg-white border border-border rounded-lg text-sm text-foreground placeholder-muted hover:border-border-hover focus:border-foreground transition-all resize-y"
                     />
                   </div>
                   <div>
@@ -405,7 +405,7 @@ export default function FormSettingsPage({ params }: { params: Promise<{ id: str
                   <h3 className="text-sm font-medium text-foreground mb-3">Pre-visualizacao</h3>
                   <div className="bg-[#1a1a2e] rounded-xl p-8 text-center">
                     <h2 className="text-xl font-bold text-white mb-2">{welcomeTitle || 'Titulo'}</h2>
-                    <p className="text-white/60 text-sm mb-6">{welcomeDesc || 'Descricao...'}</p>
+                    <p className="text-white/60 text-sm mb-6 whitespace-pre-line">{welcomeDesc || 'Descricao...'}</p>
                     <span className="inline-block px-6 py-2.5 bg-accent text-white rounded-lg text-sm font-medium">
                       {welcomeButton || 'Comecar'}
                     </span>
@@ -433,8 +433,8 @@ export default function FormSettingsPage({ params }: { params: Promise<{ id: str
                     <textarea
                       value={thanksDesc}
                       onChange={(e) => setThanksDesc(e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 bg-white border border-border rounded-lg text-sm text-foreground placeholder-muted hover:border-border-hover focus:border-foreground transition-all resize-none"
+                      rows={6}
+                      className="w-full px-3 py-2 bg-white border border-border rounded-lg text-sm text-foreground placeholder-muted hover:border-border-hover focus:border-foreground transition-all resize-y"
                     />
                   </div>
                 </div>
@@ -444,7 +444,7 @@ export default function FormSettingsPage({ params }: { params: Promise<{ id: str
                   <h3 className="text-sm font-medium text-foreground mb-3">Pre-visualizacao</h3>
                   <div className="bg-[#1a1a2e] rounded-xl p-8 text-center">
                     <h2 className="text-xl font-bold text-white mb-2">{thanksTitle || 'Obrigado!'}</h2>
-                    <p className="text-white/60 text-sm">{thanksDesc || 'Suas respostas foram enviadas.'}</p>
+                    <p className="text-white/60 text-sm whitespace-pre-line">{thanksDesc || 'Suas respostas foram enviadas.'}</p>
                   </div>
                 </div>
               </>

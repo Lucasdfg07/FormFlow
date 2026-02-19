@@ -75,7 +75,7 @@ export default function QuestionScreen({
           {field.required && <span className="ml-1" style={{ color: primaryColor }}>*</span>}
         </h2>
         {field.description && (
-          <p className="text-base mt-2" style={{ color: `${questionColor}99` }}>{field.description}</p>
+          <p className="text-base mt-2 whitespace-pre-line" style={{ color: `${questionColor}99` }}>{field.description}</p>
         )}
       </div>
 

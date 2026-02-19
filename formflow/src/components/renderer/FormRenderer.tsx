@@ -296,7 +296,7 @@ export default function FormRenderer({
                   {currentField.required && <span className="ml-1" style={{ color: buttonColor }}>*</span>}
                 </h2>
                 {currentField.description && (
-                  <p className="text-base mb-8" style={{ color: `${questionColor}99` }}>
+                  <p className="text-base mb-8 whitespace-pre-line" style={{ color: `${questionColor}99` }}>
                     {currentField.description}
                   </p>
                 )}
@@ -441,11 +441,11 @@ export default function FormRenderer({
                   >
                     {welcomeScreen.title}
                   </h1>
-                  {welcomeScreen.description && (
-                    <p className="text-lg mb-8" style={{ color: `${questionColor}b3` }}>
-                      {welcomeScreen.description}
-                    </p>
-                  )}
+                {welcomeScreen.description && (
+                  <p className="text-lg mb-8 whitespace-pre-line" style={{ color: `${questionColor}b3` }}>
+                    {welcomeScreen.description}
+                  </p>
+                )}
                   <button
                     onClick={() => { setDirection(1); setCurrentIndex(0); }}
                     className="px-8 py-3 font-medium text-lg transition-all hover:opacity-90"
@@ -531,9 +531,9 @@ export default function FormRenderer({
                   >
                     {thankYouScreen?.title || 'Obrigado!'}
                   </h1>
-                  <p className="text-lg" style={{ color: `${questionColor}b3` }}>
-                    {thankYouScreen?.description || 'Suas respostas foram enviadas com sucesso.'}
-                  </p>
+                <p className="text-lg whitespace-pre-line" style={{ color: `${questionColor}b3` }}>
+                  {thankYouScreen?.description || 'Suas respostas foram enviadas com sucesso.'}
+                </p>
                 </motion.div>
               )}
             </AnimatePresence>
