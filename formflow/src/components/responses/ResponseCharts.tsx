@@ -576,7 +576,7 @@ export default function ResponseCharts({
                           layout="vertical"
                           onClick={(state) => {
                             if (state?.activeLabel) {
-                              toggleFilter(field.id, field.title, state.activeLabel);
+                              toggleFilter(field.id, field.title, String(state.activeLabel));
                             }
                           }}
                           style={{ cursor: 'pointer' }}

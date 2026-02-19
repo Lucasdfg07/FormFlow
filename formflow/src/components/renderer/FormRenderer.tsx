@@ -318,7 +318,7 @@ export default function FormRenderer({
 
                 {/* Scheduled success inline */}
                 {typeof answers[currentField.id] === 'object' &&
-                 (answers[currentField.id] as Record<string, unknown>)?.scheduled && (
+                 !!(answers[currentField.id] as Record<string, unknown>)?.scheduled && (
                   <div className="flex items-center gap-3 mb-6 p-4 rounded-xl" style={{ backgroundColor: `${buttonColor}15` }}>
                     <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${buttonColor}25` }}>
                       <Check size={20} style={{ color: buttonColor }} />
