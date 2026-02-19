@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, Check } from 'lucide-react';
 import QuestionScreen from './QuestionScreen';
+import CalendlyEmbed, { type CalendlyEventData } from './CalendlyEmbed';
 import { validateField, type ValidationRule } from '@/lib/validators';
 
 interface RendererField {
@@ -205,6 +206,10 @@ export default function FormRenderer({
     if (!currentField.required) return true;
     const answer = answers[currentField.id];
     if (answer === undefined || answer === null || answer === '') return false;
+    // For Calendly, check if event was scheduled
+    if (currentField.type === 'calendly') {
+      return typeof answer === 'object' && (answer as Record<string, unknown>)?.scheduled === true;
+    }
     return true;
   };
 
@@ -264,64 +269,54 @@ export default function FormRenderer({
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex items-center justify-center px-6 py-16">
-        <div className="w-full max-w-xl">
+      {currentField?.type === 'calendly' && !isWelcome && !isThankYou ? (
+        /* ── CALENDLY SPLIT LAYOUT ── */
+        <div className="flex-1 flex min-h-0">
           <AnimatePresence mode="wait" custom={direction}>
-            {isWelcome && welcomeScreen && (
-              <motion.div
-                key="welcome"
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="text-center"
-              >
-                <h1
-                  className="font-bold mb-4"
+            <motion.div
+              key={currentField.id}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="flex-1 flex flex-col lg:flex-row w-full"
+            >
+              {/* Left side — info */}
+              <div className="lg:w-[42%] flex flex-col justify-center px-8 lg:px-16 py-12 lg:py-20">
+                <span className="text-sm font-medium mb-3 block" style={{ color: `${questionColor}80` }}>
+                  {currentIndex + 1} →
+                </span>
+                <h2
+                  className="font-bold leading-tight mb-4"
                   style={{ color: questionColor, fontSize: getTitleFontSize(fontSize) }}
                 >
-                  {welcomeScreen.title}
-                </h1>
-                {welcomeScreen.description && (
-                  <p className="text-lg mb-8" style={{ color: `${questionColor}b3` }}>
-                    {welcomeScreen.description}
+                  {currentField.title}
+                  {currentField.required && <span className="ml-1" style={{ color: buttonColor }}>*</span>}
+                </h2>
+                {currentField.description && (
+                  <p className="text-base mb-8" style={{ color: `${questionColor}99` }}>
+                    {currentField.description}
                   </p>
                 )}
-                <button
-                  onClick={() => { setDirection(1); setCurrentIndex(0); }}
-                  className="px-8 py-3 font-medium text-lg transition-all hover:opacity-90"
-                  style={{ backgroundColor: buttonColor, color: buttonTextColor, borderRadius }}
-                >
-                  {welcomeScreen.buttonText || 'Comecar'}
-                </button>
-              </motion.div>
-            )}
 
-            {!isWelcome && !isThankYou && currentField && (
-              <motion.div
-                key={currentField.id}
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <QuestionScreen
-                  field={currentField}
-                  value={answers[currentField.id]}
-                  onChange={(value) => handleAnswer(currentField.id, value)}
-                  questionNumber={currentIndex + 1}
-                  primaryColor={buttonColor}
-                  questionColor={questionColor}
-                  answerColor={answerColor}
-                  borderRadius={borderRadius}
-                  error={fieldErrors[currentField.id]}
-                />
+                {/* Scheduled success inline */}
+                {typeof answers[currentField.id] === 'object' &&
+                 (answers[currentField.id] as Record<string, unknown>)?.scheduled && (
+                  <div className="flex items-center gap-3 mb-6 p-4 rounded-xl" style={{ backgroundColor: `${buttonColor}15` }}>
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${buttonColor}25` }}>
+                      <Check size={20} style={{ color: buttonColor }} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold" style={{ color: questionColor }}>Agendamento confirmado!</p>
+                      <p className="text-xs" style={{ color: `${questionColor}80` }}>Você receberá um email de confirmação.</p>
+                    </div>
+                  </div>
+                )}
 
-                <div className="mt-8 flex items-center gap-4">
+                {/* Navigation buttons */}
+                <div className="flex items-center gap-4 mt-auto pt-6">
                   {isLastQuestion ? (
                     <button
                       onClick={handleSubmit}
@@ -346,40 +341,205 @@ export default function FormRenderer({
                     pressione <strong>Enter</strong> ↵
                   </span>
                 </div>
-              </motion.div>
-            )}
 
-            {isThankYou && (
-              <motion.div
-                key="thanks"
-                custom={direction}
-                variants={slideVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                className="text-center"
+                {/* Error */}
+                {fieldErrors[currentField.id] && (
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className="text-sm font-medium" style={{ color: '#ef4444' }}>
+                      {fieldErrors[currentField.id]}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Right side — Calendly widget */}
+              <div
+                className="lg:w-[58%] flex items-stretch min-h-[500px] lg:min-h-0"
+                style={{ backgroundColor: `${questionColor}08` }}
               >
-                <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-                  style={{ backgroundColor: buttonColor }}
-                >
-                  <Check size={32} style={{ color: buttonTextColor }} />
+                <div className="flex-1 p-4 lg:p-6">
+                  {(() => {
+                    const props = currentField.properties ? JSON.parse(currentField.properties) : {};
+                    if (!props.calendlyUrl) return null;
+
+                    const prefillNameFieldId = props.prefillNameFieldId;
+                    const prefillEmailFieldId = props.prefillEmailFieldId;
+
+                    let resolvedName = '';
+                    let resolvedEmail = '';
+
+                    if (prefillNameFieldId && answers[prefillNameFieldId]) {
+                      resolvedName = String(answers[prefillNameFieldId]);
+                    } else {
+                      for (const f of fields) {
+                        if (!answers[f.id]) continue;
+                        const t = f.title.toLowerCase();
+                        if (t.includes('nome') || t.includes('name')) {
+                          resolvedName = String(answers[f.id]);
+                          break;
+                        }
+                      }
+                    }
+
+                    if (prefillEmailFieldId && answers[prefillEmailFieldId]) {
+                      resolvedEmail = String(answers[prefillEmailFieldId]);
+                    } else {
+                      for (const f of fields) {
+                        if (!answers[f.id]) continue;
+                        if (f.type === 'email' || f.title.toLowerCase().includes('email')) {
+                          resolvedEmail = String(answers[f.id]);
+                          break;
+                        }
+                      }
+                    }
+
+                    return (
+                      <CalendlyEmbed
+                        calendlyUrl={props.calendlyUrl}
+                        prefillName={resolvedName}
+                        prefillEmail={resolvedEmail}
+                        primaryColor={buttonColor}
+                        questionColor={questionColor}
+                        borderRadius={borderRadius}
+                        onEventScheduled={(eventData: CalendlyEventData) => {
+                          handleAnswer(currentField.id, {
+                            scheduled: true,
+                            event_uri: eventData.event_uri,
+                            invitee_uri: eventData.invitee_uri,
+                            event_type_name: eventData.event_type_name,
+                            event_start_time: eventData.event_start_time,
+                            event_end_time: eventData.event_end_time,
+                          });
+                        }}
+                      />
+                    );
+                  })()}
                 </div>
-                <h1
-                  className="font-bold mb-4"
-                  style={{ color: questionColor, fontSize: getTitleFontSize(fontSize) }}
-                >
-                  {thankYouScreen?.title || 'Obrigado!'}
-                </h1>
-                <p className="text-lg" style={{ color: `${questionColor}b3` }}>
-                  {thankYouScreen?.description || 'Suas respostas foram enviadas com sucesso.'}
-                </p>
-              </motion.div>
-            )}
+              </div>
+            </motion.div>
           </AnimatePresence>
         </div>
-      </div>
+      ) : (
+        /* ── STANDARD CENTERED LAYOUT ── */
+        <div className="flex-1 flex items-center justify-center px-6 py-16">
+          <div className="w-full max-w-xl">
+            <AnimatePresence mode="wait" custom={direction}>
+              {isWelcome && welcomeScreen && (
+                <motion.div
+                  key="welcome"
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-center"
+                >
+                  <h1
+                    className="font-bold mb-4"
+                    style={{ color: questionColor, fontSize: getTitleFontSize(fontSize) }}
+                  >
+                    {welcomeScreen.title}
+                  </h1>
+                  {welcomeScreen.description && (
+                    <p className="text-lg mb-8" style={{ color: `${questionColor}b3` }}>
+                      {welcomeScreen.description}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => { setDirection(1); setCurrentIndex(0); }}
+                    className="px-8 py-3 font-medium text-lg transition-all hover:opacity-90"
+                    style={{ backgroundColor: buttonColor, color: buttonTextColor, borderRadius }}
+                  >
+                    {welcomeScreen.buttonText || 'Comecar'}
+                  </button>
+                </motion.div>
+              )}
+
+              {!isWelcome && !isThankYou && currentField && (
+                <motion.div
+                  key={currentField.id}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                >
+                  <QuestionScreen
+                    field={currentField}
+                    value={answers[currentField.id]}
+                    onChange={(value) => handleAnswer(currentField.id, value)}
+                    questionNumber={currentIndex + 1}
+                    primaryColor={buttonColor}
+                    questionColor={questionColor}
+                    answerColor={answerColor}
+                    borderRadius={borderRadius}
+                    error={fieldErrors[currentField.id]}
+                    allAnswers={answers}
+                    allFields={fields.map(f => ({ id: f.id, type: f.type, title: f.title }))}
+                  />
+
+                  <div className="mt-8 flex items-center gap-4">
+                    {isLastQuestion ? (
+                      <button
+                        onClick={handleSubmit}
+                        disabled={!canProceed() || submitting}
+                        className="px-8 py-3 font-medium transition-all hover:opacity-90 disabled:opacity-50 flex items-center gap-2"
+                        style={{ backgroundColor: buttonColor, color: buttonTextColor, borderRadius }}
+                      >
+                        {submitting ? 'Enviando...' : 'Enviar'}
+                        <Check size={18} />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={goNext}
+                        disabled={!canProceed()}
+                        className="px-8 py-3 font-medium transition-all hover:opacity-90 disabled:opacity-50"
+                        style={{ backgroundColor: buttonColor, color: buttonTextColor, borderRadius }}
+                      >
+                        OK
+                      </button>
+                    )}
+                    <span className="text-sm" style={{ color: `${questionColor}80` }}>
+                      pressione <strong>Enter</strong> ↵
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+
+              {isThankYou && (
+                <motion.div
+                  key="thanks"
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="text-center"
+                >
+                  <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
+                    style={{ backgroundColor: buttonColor }}
+                  >
+                    <Check size={32} style={{ color: buttonTextColor }} />
+                  </div>
+                  <h1
+                    className="font-bold mb-4"
+                    style={{ color: questionColor, fontSize: getTitleFontSize(fontSize) }}
+                  >
+                    {thankYouScreen?.title || 'Obrigado!'}
+                  </h1>
+                  <p className="text-lg" style={{ color: `${questionColor}b3` }}>
+                    {thankYouScreen?.description || 'Suas respostas foram enviadas com sucesso.'}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      )}
 
       {/* Navigation arrows */}
       {!isWelcome && !isThankYou && (

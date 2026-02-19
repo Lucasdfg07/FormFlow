@@ -41,6 +41,8 @@ export interface FieldProperties {
   rows?: string[];
   columns?: string[];
   calendlyUrl?: string;
+  prefillNameFieldId?: string;
+  prefillEmailFieldId?: string;
   buttonText?: string;
 }
 

@@ -2,6 +2,7 @@
 
 import { Star, AlertCircle } from 'lucide-react';
 import { formatPhone, type ValidationRule } from '@/lib/validators';
+import CalendlyEmbed, { type CalendlyEventData } from './CalendlyEmbed';
 
 interface QuestionScreenProps {
   field: {
@@ -21,6 +22,8 @@ interface QuestionScreenProps {
   answerColor?: string;
   borderRadius?: string;
   error?: string | null;
+  allAnswers?: Record<string, unknown>;
+  allFields?: { id: string; type: string; title: string }[];
 }
 
 export default function QuestionScreen({
@@ -33,6 +36,8 @@ export default function QuestionScreen({
   answerColor = '#f1f5f9',
   borderRadius = '8px',
   error,
+  allAnswers = {},
+  allFields = [],
 }: QuestionScreenProps) {
   const props = field.properties ? JSON.parse(field.properties) : {};
   const validations: ValidationRule | null = field.validations ? JSON.parse(field.validations) : null;
@@ -375,17 +380,62 @@ export default function QuestionScreen({
         </div>
       )}
 
-      {field.type === 'calendly' && props.calendlyUrl && (
-        <div className="overflow-hidden bg-white" style={{ height: 630, borderRadius }}>
-          <iframe
-            src={props.calendlyUrl}
-            width="100%"
-            height="100%"
-            frameBorder="0"
-            title="Calendly"
+      {field.type === 'calendly' && props.calendlyUrl && (() => {
+        // Resolve prefill from mapped fields or auto-detect
+        const prefillNameFieldId = props.prefillNameFieldId;
+        const prefillEmailFieldId = props.prefillEmailFieldId;
+
+        let resolvedName = '';
+        let resolvedEmail = '';
+
+        if (prefillNameFieldId && allAnswers[prefillNameFieldId]) {
+          resolvedName = String(allAnswers[prefillNameFieldId]);
+        } else {
+          // Auto-detect: find first field that looks like "name"
+          for (const f of allFields) {
+            if (!allAnswers[f.id]) continue;
+            const t = f.title.toLowerCase();
+            if (t.includes('nome') || t.includes('name')) {
+              resolvedName = String(allAnswers[f.id]);
+              break;
+            }
+          }
+        }
+
+        if (prefillEmailFieldId && allAnswers[prefillEmailFieldId]) {
+          resolvedEmail = String(allAnswers[prefillEmailFieldId]);
+        } else {
+          // Auto-detect: find first email field
+          for (const f of allFields) {
+            if (!allAnswers[f.id]) continue;
+            if (f.type === 'email' || f.title.toLowerCase().includes('email')) {
+              resolvedEmail = String(allAnswers[f.id]);
+              break;
+            }
+          }
+        }
+
+        return (
+          <CalendlyEmbed
+            calendlyUrl={props.calendlyUrl}
+            prefillName={resolvedName}
+            prefillEmail={resolvedEmail}
+            primaryColor={primaryColor}
+            questionColor={questionColor}
+            borderRadius={borderRadius}
+            onEventScheduled={(eventData: CalendlyEventData) => {
+              onChange({
+                scheduled: true,
+                event_uri: eventData.event_uri,
+                invitee_uri: eventData.invitee_uri,
+                event_type_name: eventData.event_type_name,
+                event_start_time: eventData.event_start_time,
+                event_end_time: eventData.event_end_time,
+              });
+            }}
           />
-        </div>
-      )}
+        );
+      })()}
 
       {field.type === 'signature' && (
         <div className="border-2 p-4 text-center" style={{ borderColor: `${answerColor}33`, borderRadius }}>

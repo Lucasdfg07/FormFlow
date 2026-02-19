@@ -117,6 +117,18 @@ export default function SortableFieldItem({ field, index = 0 }: SortableFieldIte
               ))}
             </div>
           )}
+
+          {/* Calendly preview */}
+          {field.type === 'calendly' && (
+            <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg" style={{ backgroundColor: `${btnColor}15` }}>
+              <span className="text-sm" style={{ color: `${btnColor}` }}>📅</span>
+              <span className="text-xs" style={{ color: `${aColor}80` }}>
+                {(field.properties as Record<string, unknown>)?.calendlyUrl
+                  ? 'Widget do Calendly embutido'
+                  : 'Configure a URL do Calendly →'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Actions */}

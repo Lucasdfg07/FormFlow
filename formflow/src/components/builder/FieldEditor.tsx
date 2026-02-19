@@ -4,7 +4,7 @@ import { useBuilderStore } from '@/stores/builder-store';
 import { FIELD_TYPES } from '@/types';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-import { X, Plus, Trash2, ChevronDown, Shield, EyeOff } from 'lucide-react';
+import { X, Plus, Trash2, ChevronDown, Shield, EyeOff, CalendarCheck, User, Mail } from 'lucide-react';
 import { getValidationOptions, getDefaultValidation, type ValidationRule } from '@/lib/validators';
 
 export default function FieldEditor() {
@@ -344,23 +344,100 @@ export default function FieldEditor() {
           </div>
         )}
 
-        {/* Calendly URL */}
+        {/* Calendly Configuration */}
         {field.type === 'calendly' && (
-          <div>
-            <label className="block text-xs font-medium text-foreground mb-1.5">
-              URL do Calendly
-            </label>
-            <input
-              placeholder="https://calendly.com/seu-link"
-              value={((field.properties as Record<string, unknown>)?.calendlyUrl as string) || ''}
-              onChange={(e) =>
-                updateField(field.id, {
-                  properties: { ...(field.properties || {}), calendlyUrl: e.target.value },
-                })
-              }
-              className="w-full px-3 py-2 bg-white border border-border rounded-lg text-sm text-foreground hover:border-border-hover focus:border-foreground transition-all"
-            />
-          </div>
+          <>
+            <div>
+              <div className="flex items-center gap-1.5 mb-3">
+                <CalendarCheck size={14} className="text-muted" />
+                <label className="text-xs font-medium text-foreground uppercase tracking-wider">
+                  Configuração do Calendly
+                </label>
+              </div>
+
+              <label className="block text-xs text-muted mb-1">
+                URL do Calendly
+              </label>
+              <input
+                placeholder="https://calendly.com/seu-link/30min"
+                value={((field.properties as Record<string, unknown>)?.calendlyUrl as string) || ''}
+                onChange={(e) =>
+                  updateField(field.id, {
+                    properties: { ...(field.properties || {}), calendlyUrl: e.target.value },
+                  })
+                }
+                className="w-full px-3 py-2 bg-white border border-border rounded-lg text-sm text-foreground hover:border-border-hover focus:border-foreground transition-all"
+              />
+              <p className="text-[10px] text-muted mt-1">
+                Cole o link do evento do Calendly. Ex: https://calendly.com/seu-nome/reuniao
+              </p>
+            </div>
+
+            <hr className="border-border" />
+
+            {/* Prefill mapping */}
+            <div>
+              <label className="text-xs font-medium text-foreground uppercase tracking-wider mb-2 block">
+                Preencher automaticamente
+              </label>
+              <p className="text-[10px] text-muted mb-3">
+                Mapeie campos do formulário para preencher dados no Calendly automaticamente.
+              </p>
+
+              {/* Name prefill */}
+              <div className="mb-3">
+                <label className="flex items-center gap-1.5 text-xs text-muted mb-1">
+                  <User size={12} />
+                  Nome do participante
+                </label>
+                <select
+                  value={((field.properties as Record<string, unknown>)?.prefillNameFieldId as string) || ''}
+                  onChange={(e) =>
+                    updateField(field.id, {
+                      properties: { ...(field.properties || {}), prefillNameFieldId: e.target.value || undefined },
+                    })
+                  }
+                  className="w-full px-3 py-1.5 bg-white border border-border rounded-lg text-sm text-foreground appearance-none cursor-pointer hover:border-border-hover transition-all"
+                >
+                  <option value="">Auto-detectar</option>
+                  {fields.filter(f => f.id !== field.id).map(f => (
+                    <option key={f.id} value={f.id}>{f.title}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Email prefill */}
+              <div>
+                <label className="flex items-center gap-1.5 text-xs text-muted mb-1">
+                  <Mail size={12} />
+                  Email do participante
+                </label>
+                <select
+                  value={((field.properties as Record<string, unknown>)?.prefillEmailFieldId as string) || ''}
+                  onChange={(e) =>
+                    updateField(field.id, {
+                      properties: { ...(field.properties || {}), prefillEmailFieldId: e.target.value || undefined },
+                    })
+                  }
+                  className="w-full px-3 py-1.5 bg-white border border-border rounded-lg text-sm text-foreground appearance-none cursor-pointer hover:border-border-hover transition-all"
+                >
+                  <option value="">Auto-detectar</option>
+                  {fields.filter(f => f.id !== field.id).map(f => (
+                    <option key={f.id} value={f.id}>{f.title}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Preview info */}
+            {((field.properties as Record<string, unknown>)?.calendlyUrl as string) && (
+              <div className="px-3 py-2 bg-accent-light rounded-lg">
+                <p className="text-xs text-accent font-medium">
+                  ✓ Widget do Calendly será exibido inline no formulário
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
