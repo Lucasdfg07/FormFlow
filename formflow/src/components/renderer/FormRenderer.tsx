@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronUp, ChevronDown, Check } from 'lucide-react';
 import QuestionScreen from './QuestionScreen';
@@ -84,6 +84,9 @@ export default function FormRenderer({
   const [startedAt] = useState(new Date().toISOString());
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
 
+  // Ref sincrono para bloquear submissoes concorrentes (state e assincrono)
+  const submittingRef = useRef(false);
+
   const totalQuestions = fields.length;
   const isWelcome = currentIndex === -1;
   const isThankYou = submitted;
@@ -148,9 +151,14 @@ export default function FormRenderer({
   }, [currentIndex, welcomeScreen]);
 
   const handleSubmit = async () => {
+    // Guard: bloqueia se ja enviou ou esta enviando (ref sincrono)
+    if (submitted || submittingRef.current) return;
+
     // Validate before submitting
     if (!validateCurrentField()) return;
 
+    // Trava SINCRONA (impede chamadas concorrentes antes do re-render)
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       const res = await fetch('/api/responses', {
@@ -192,9 +200,12 @@ export default function FormRenderer({
             }
           }
         }
+        // Libera trava apenas se houve erro de validacao (permitir reenvio)
+        submittingRef.current = false;
       }
     } catch (error) {
       console.error('Submit error:', error);
+      submittingRef.current = false;
     } finally {
       setSubmitting(false);
     }
@@ -213,9 +224,12 @@ export default function FormRenderer({
     return true;
   };
 
-  // Keyboard navigation
+  // Keyboard navigation (com dependency array para nao duplicar listeners)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Bloqueia Enter se ja enviou ou esta enviando
+      if (submitted || submittingRef.current) return;
+
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         if (isWelcome) {
@@ -234,7 +248,8 @@ export default function FormRenderer({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isWelcome, isLastQuestion, submitted, goNext, goPrev]);
 
   const slideVariants = {
     enter: (dir: number) => ({ y: dir > 0 ? 60 : -60, opacity: 0 }),

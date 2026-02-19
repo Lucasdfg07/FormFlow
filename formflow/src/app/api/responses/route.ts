@@ -97,11 +97,31 @@ export async function POST(request: Request) {
       );
     }
 
+    // Deduplicação server-side: mesmas respostas + mesmo formId nos últimos 60s
+    const answersJson = JSON.stringify(answers);
+    const deduplicaWindow = new Date(Date.now() - 60 * 1000); // 60 segundos
+
+    const existingDuplicate = await prisma.response.findFirst({
+      where: {
+        formId,
+        answers: answersJson,
+        createdAt: { gte: deduplicaWindow },
+      },
+    });
+
+    if (existingDuplicate) {
+      // Retorna sucesso sem criar duplicata (idempotente)
+      return NextResponse.json(
+        { success: true, responseId: existingDuplicate.id, deduplicated: true },
+        { status: 200 }
+      );
+    }
+
     // Create response
     const response = await prisma.response.create({
       data: {
         formId,
-        answers: JSON.stringify(answers),
+        answers: answersJson,
         metadata: metadata ? JSON.stringify(metadata) : null,
         completedAt: new Date(),
       },
